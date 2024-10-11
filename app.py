@@ -55,7 +55,7 @@ def process_image(image):
 
     return cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB), person_count
 
-# Function to process video and count people in total
+# Function to process video and count people in each frame
 def process_video(input_video_path, output_video_path):
     cap = cv2.VideoCapture(input_video_path)
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -78,7 +78,7 @@ def process_video(input_video_path, output_video_path):
 
         # Detect and process each frame for pose estimation
         processed_frame, person_count = process_image(frame)
-        total_person_count += person_count  # Sum up the detected persons
+        total_person_count += person_count
         out.write(cv2.cvtColor(processed_frame, cv2.COLOR_RGB2BGR))
 
         frame_count += 1
@@ -87,7 +87,8 @@ def process_video(input_video_path, output_video_path):
     cap.release()
     out.release()
 
-    return int(total_person_count)  # Return the absolute total person count
+    avg_person_count = total_person_count / frame_count if frame_count > 0 else 0
+    return avg_person_count
 
 # Streamlit Upload Options
 upload_type = st.selectbox("Choose upload type", ("Image", "Video"))
@@ -115,13 +116,13 @@ elif upload_type == "Video":
         tfile = tempfile.NamedTemporaryFile(delete=False)
         tfile.write(uploaded_video.read())
 
-        # Process video and get total person count
+        # Process video and get average person count
         output_video_path = "output_video.mp4"
-        total_person_count = process_video(tfile.name, output_video_path)
+        avg_person_count = process_video(tfile.name, output_video_path)
 
-        # Display processed video and total person count
+        # Display processed video and average person count
         st.video(output_video_path)
-        st.write(f"Total number of persons detected in the video: {total_person_count}")
+        st.write(f"Average number of persons detected per frame: {avg_person_count:.2f}")
 
         # Download button for processed video
         with open(output_video_path, 'rb') as f:
