@@ -1,12 +1,12 @@
 import streamlit as st
 
 
-import mediapipe as mp
 import numpy as np
 from PIL import Image
 import tempfile
 from ultralytics import YOLO
 import cv2
+import mediapipe as mp
 # Initialize YOLOv8 model for person detection
 yolo_model = YOLO('yolov8n.pt')  # Use yolov8n.pt (nano) for small model; switch to other YOLOv8 models if needed
 
