@@ -1,12 +1,11 @@
 import streamlit as st
-
-
+import cv2
+import mediapipe as mp
 import numpy as np
 from PIL import Image
 import tempfile
 from ultralytics import YOLO
-import cv2
-import mediapipe as mp
+
 # Initialize YOLOv8 model for person detection
 yolo_model = YOLO('yolov8n.pt')  # Use yolov8n.pt (nano) for small model; switch to other YOLOv8 models if needed
 
@@ -56,7 +55,7 @@ def process_image(image):
 
     return cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB), person_count
 
-# Function to process video and count people in each frame
+# Function to process video and count people in total
 def process_video(input_video_path, output_video_path):
     cap = cv2.VideoCapture(input_video_path)
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -79,7 +78,7 @@ def process_video(input_video_path, output_video_path):
 
         # Detect and process each frame for pose estimation
         processed_frame, person_count = process_image(frame)
-        total_person_count += person_count
+        total_person_count += person_count  # Sum up the detected persons
         out.write(cv2.cvtColor(processed_frame, cv2.COLOR_RGB2BGR))
 
         frame_count += 1
@@ -88,8 +87,7 @@ def process_video(input_video_path, output_video_path):
     cap.release()
     out.release()
 
-    avg_person_count = total_person_count / frame_count if frame_count > 0 else 0
-    return avg_person_count
+    return int(total_person_count)  # Return the absolute total person count
 
 # Streamlit Upload Options
 upload_type = st.selectbox("Choose upload type", ("Image", "Video"))
@@ -117,13 +115,13 @@ elif upload_type == "Video":
         tfile = tempfile.NamedTemporaryFile(delete=False)
         tfile.write(uploaded_video.read())
 
-        # Process video and get average person count
+        # Process video and get total person count
         output_video_path = "output_video.mp4"
-        avg_person_count = process_video(tfile.name, output_video_path)
+        total_person_count = process_video(tfile.name, output_video_path)
 
-        # Display processed video and average person count
+        # Display processed video and total person count
         st.video(output_video_path)
-        st.write(f"Average number of persons detected per frame: {avg_person_count:.2f}")
+        st.write(f"Total number of persons detected in the video: {total_person_count}")
 
         # Download button for processed video
         with open(output_video_path, 'rb') as f:
